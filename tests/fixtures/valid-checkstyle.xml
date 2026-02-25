@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="10.3.4">
+    <file name="/home/user/project/src/Main.java">
+        <error line="17" column="17" severity="error" message="Fall through from previous branch of switch statement." source="com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck"/>
+        <error line="42" column="1" severity="warning" message="Line is longer than 80 characters (found 94)." source="com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck"/>
+        <error line="56" severity="info" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocMethodCheck"/>
+    </file>
+    <file name="/home/user/project/src/Utils.java">
+        <error line="10" column="5" severity="error" message="Variable &apos;foo&apos; must be private." source="com.puppycrawl.tools.checkstyle.checks.design.VisibilityModifierCheck"/>
+        <error line="23" column="9" severity="warning" message="&apos;if&apos; construct must use &apos;{&apos;s." source="com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck"/>
+    </file>
+    <file name="/home/user/project/src/Config.java">
+        <error line="1" column="1" severity="error" message="File does not end with a newline." source="com.puppycrawl.tools.checkstyle.checks.NewlineAtEndOfFileCheck"/>
+    </file>
+</checkstyle>

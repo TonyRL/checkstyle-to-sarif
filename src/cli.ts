@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+import { readFile, writeFile } from 'node:fs/promises';
+import process from 'node:process';
+
+import { program } from 'commander';
+
+import { convertCheckstyleToSarif } from './index.js';
+
+async function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    process.stdin.on('data', (chunk: Buffer) => chunks.push(chunk));
+    process.stdin.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+    process.stdin.on('error', reject);
+  });
+}
+
+async function main(): Promise<void> {
+  program
+    .name('checkstyle-to-sarif')
+    .description('Convert Checkstyle XML output to SARIF format')
+    .version('0.1.0')
+    .option('-i, --input <path>', 'Path to the Checkstyle XML input file')
+    .option('-o, --output <path>', 'Path to write the SARIF output file (defaults to stdout)');
+
+  program.parse();
+
+  const opts = program.opts<{ input?: string; output?: string }>();
+
+  let xmlContent: string;
+
+  // Determine input source
+  if (opts.input) {
+    try {
+      xmlContent = await readFile(opts.input, 'utf-8');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`Error: Cannot read input file "${opts.input}": ${message}\n`);
+      process.exit(1);
+    }
+  } else if (!process.stdin.isTTY) {
+    // Reading from piped stdin
+    try {
+      xmlContent = await readStdin();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`Error: Failed to read from stdin: ${message}\n`);
+      process.exit(1);
+    }
+  } else {
+    process.stderr.write(
+      'Error: No input provided. Use --input <path> or pipe input via stdin.\n' +
+        'Example: npx checkstyle-to-sarif --input checkstyle.xml\n' +
+        '         cat checkstyle.xml | npx checkstyle-to-sarif\n'
+    );
+    process.exit(1);
+  }
+
+  // Convert
+  let sarifOutput: string;
+  try {
+    sarifOutput = convertCheckstyleToSarif(xmlContent);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`Error: Conversion failed: ${message}\n`);
+    process.exit(1);
+  }
+
+  // Determine output destination
+  if (opts.output) {
+    try {
+      await writeFile(opts.output, sarifOutput, 'utf-8');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`Error: Cannot write output file "${opts.output}": ${message}\n`);
+      process.exit(1);
+    }
+  } else {
+    process.stdout.write(sarifOutput + '\n');
+  }
+}
+
+await main();
