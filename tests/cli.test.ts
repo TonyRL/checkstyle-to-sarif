@@ -12,77 +12,6 @@ function loadFixture(name: string): string {
   return readFileSync(join(fixturesDir, name), 'utf-8');
 }
 
-// Runs the CLI programmatically, mocking process.argv, stdin, stdout, and stderr
-async function runCli(
-  args: string[],
-  stdinContent?: string
-): Promise<{
-  stdout: string;
-  stderr: string;
-  exitCode: number | undefined;
-}> {
-  const stdoutChunks: string[] = [];
-  const stderrChunks: string[] = [];
-  let exitCode: number | undefined;
-
-  // Mock process methods
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
-    stdoutChunks.push(String(chunk));
-    return true;
-  });
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-    stderrChunks.push(String(chunk));
-    return true;
-  });
-  const exitSpy = vi.spyOn(process, 'exit').mockImplementation((code?: number | string | null | undefined) => {
-    exitCode = typeof code === 'number' ? code : 0;
-    throw new Error(`process.exit(${exitCode})`);
-  });
-
-  const origArgv = process.argv;
-
-  if (stdinContent !== undefined) {
-    Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
-    // Mock stdin reading
-    const { Readable } = await import('node:stream');
-    const mockStdin = Readable.from([stdinContent]);
-    vi.spyOn(process, 'stdin', 'get').mockReturnValue(mockStdin as any);
-  } else {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
-  }
-
-  try {
-    process.argv = ['node', 'cli.js', ...args];
-    // Re-import the CLI with fresh module state
-    // We use a dynamic import with a cache-busting query to avoid module caching
-    const { main } = await import(`${projectRoot}/src/cli.ts?t=${Date.now()}` as string).catch(
-      () =>
-        // Fallback: run cli module directly
-        import('../src/cli.js' as string)
-    );
-    if (typeof main === 'function') {
-      await main();
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.startsWith('process.exit')) {
-      // expected
-    } else {
-      throw err;
-    }
-  } finally {
-    process.argv = origArgv;
-    stdoutSpy.mockRestore();
-    stderrSpy.mockRestore();
-    exitSpy.mockRestore();
-    Object.defineProperty(process.stdin, 'isTTY', { value: undefined, configurable: true });
-  }
-
-  return {
-    stdout: stdoutChunks.join(''),
-    stderr: stderrChunks.join(''),
-    exitCode,
-  };
-}
 
 // ─── CLI Integration Tests ────────────────────────────────────────────────────
 // These tests use child_process.execFile to test the built CLI
@@ -104,10 +33,13 @@ async function runBuiltCli(
       [cliPath, ...args],
       { encoding: 'utf-8', timeout: 10000 },
       (err, stdout, stderr) => {
+        const exitCode = err && typeof err === 'object' && 'code' in err && typeof err.code === 'number'
+          ? err.code
+          : err ? 1 : 0;
         resolve({
           stdout: stdout ?? '',
           stderr: stderr ?? '',
-          code: err ? ((err as NodeJS.ErrnoException & { code?: number }).code ?? 1) : 0,
+          code: exitCode,
         });
       }
     );

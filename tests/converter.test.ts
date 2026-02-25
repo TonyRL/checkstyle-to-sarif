@@ -100,6 +100,28 @@ describe('convertToSarif', () => {
         expect(sarif.runs[0].results[0].level).toBe(expectedLevel);
       });
     }
+
+    it('maps unknown severity to SARIF warning', () => {
+      const error: CheckstyleReport['file'][0]['error'][0] = {
+        line: 1,
+        severity: 'error',
+        message: 'Test',
+        source: 'com.example.TestCheck',
+      };
+      // Override with an unknown severity value to test edge case handling
+      Object.assign(error, { severity: 'custom' });
+
+      const report = makeReport({
+        file: [
+          {
+            name: 'Foo.java',
+            error: [error],
+          },
+        ],
+      });
+      const sarif = convertToSarif(report);
+      expect(sarif.runs[0].results[0].level).toBe('warning');
+    });
   });
 
   describe('result location', () => {
@@ -212,6 +234,26 @@ describe('convertToSarif', () => {
       });
       const sarif = convertToSarif(report);
       expect(sarif.runs[0].results[0].ruleId).toBe('FallThroughCheck');
+    });
+
+    it('uses UnknownRule when source is undefined', () => {
+      const report = makeReport({
+        file: [
+          {
+            name: 'Foo.java',
+            error: [
+              {
+                line: 1,
+                severity: 'error',
+                message: 'Test',
+                source: '',
+              },
+            ],
+          },
+        ],
+      });
+      const sarif = convertToSarif(report);
+      expect(sarif.runs[0].results[0].ruleId).toBe('UnknownRule');
     });
 
     it('uses full source as ruleId when no dots present', () => {
@@ -334,6 +376,79 @@ describe('convertToSarif', () => {
       });
       const sarif = convertToSarif(report);
       expect(sarif.runs[0].results).toHaveLength(3);
+    });
+  });
+
+  describe('Windows path conversion', () => {
+    it('converts Windows absolute path to file:// URI', () => {
+      const report = makeReport({
+        file: [
+          {
+            name: 'C:\\Users\\foo\\Bar.java',
+            error: [
+              {
+                line: 1,
+                severity: 'error',
+                message: 'Test',
+                source: 'com.example.TestCheck',
+              },
+            ],
+          },
+        ],
+      });
+      const sarif = convertToSarif(report);
+      const uri = sarif.runs[0].results[0].locations?.[0]?.physicalLocation?.artifactLocation?.uri;
+      expect(uri).toBe('file:///C:/Users/foo/Bar.java');
+    });
+  });
+
+  describe('empty source handling', () => {
+    it('uses UnknownRule when source is empty string', () => {
+      const report = makeReport({
+        file: [
+          {
+            name: 'Foo.java',
+            error: [
+              {
+                line: 1,
+                severity: 'warning',
+                message: 'No source',
+                source: '',
+              },
+            ],
+          },
+        ],
+      });
+      const sarif = convertToSarif(report);
+      expect(sarif.runs[0].results[0].ruleId).toBe('UnknownRule');
+    });
+  });
+
+  describe('toolVersion parameter', () => {
+    it('toolVersion parameter takes precedence over checkstyle.version', () => {
+      const report = makeReport({ version: '10.3.4' });
+      report.file = [
+        {
+          name: 'Foo.java',
+          error: [
+            { line: 1, severity: 'error', message: 'Test', source: 'com.Check' },
+          ],
+        },
+      ];
+      const sarif = convertToSarif(report, '99.0.0');
+      expect(sarif.runs[0].tool.driver.version).toBe('99.0.0');
+    });
+
+    it('falls back to checkstyle.version when toolVersion is not provided', () => {
+      const report = makeReport({ version: '10.3.4' });
+      const sarif = convertToSarif(report);
+      expect(sarif.runs[0].tool.driver.version).toBe('10.3.4');
+    });
+
+    it('omits version when neither toolVersion nor checkstyle.version is set', () => {
+      const report = makeReport({ version: undefined });
+      const sarif = convertToSarif(report);
+      expect(sarif.runs[0].tool.driver.version).toBeUndefined();
     });
   });
 });

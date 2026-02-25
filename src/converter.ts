@@ -44,11 +44,11 @@ function pathToUri(filePath: string): string {
  * e.g. "com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck" → "FallThroughCheck"
  */
 function extractRuleId(source: string): string {
-  if (!source) {
-    return 'UnknownRule';
+  if (source) {
+    const parts = source.split('.');
+    return parts[parts.length - 1] ?? source;
   }
-  const parts = source.split('.');
-  return parts[parts.length - 1] ?? source;
+  return 'UnknownRule';
 }
 
 /**
@@ -61,6 +61,7 @@ function extractRuleId(source: string): string {
 export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: string): SarifLog {
   // Collect unique rules from all errors
   const ruleMap = new Map<string, ReportingDescriptor>();
+  const ruleIndexMap = new Map<string, number>();
   const results: Result[] = [];
 
   for (const file of checkstyle.file) {
@@ -71,27 +72,32 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
       const level = mapSeverityToLevel(error.severity);
 
       // Register rule if not already seen
-      if (!ruleMap.has(ruleId)) {
+      let ruleIndex = ruleIndexMap.get(ruleId);
+      if (ruleIndex === undefined) {
         const rule: ReportingDescriptor = {
           id: ruleId,
           ...(error.source && {
             helpUri: `https://checkstyle.org/checks/${ruleId.toLowerCase()}.html`,
           }),
         };
+        ruleIndex = ruleMap.size;
+        ruleIndexMap.set(ruleId, ruleIndex);
         ruleMap.set(ruleId, rule);
       }
 
-      const ruleIndex = [...ruleMap.keys()].indexOf(ruleId);
+      const region: NonNullable<Location['physicalLocation']>['region'] = {
+        startLine: error.line,
+      };
+      if (typeof error.column === 'number' && error.column > 0) {
+        region.startColumn = error.column;
+      }
 
       const location: Location = {
         physicalLocation: {
           artifactLocation: {
             uri: fileUri,
           },
-          region: {
-            startLine: error.line,
-            ...(error.column !== undefined && error.column > 0 ? { startColumn: error.column } : {}),
-          },
+          region,
         },
       };
 
@@ -113,10 +119,13 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
     tool: {
       driver: {
         name: 'Checkstyle',
-        ...(toolVersion !== undefined ? { version: toolVersion } : {}),
-        ...(checkstyle.version !== undefined ? { version: checkstyle.version } : {}),
+        ...(toolVersion === undefined
+          ? checkstyle.version === undefined
+            ? {}
+            : { version: checkstyle.version }
+          : { version: toolVersion }),
         informationUri: 'https://checkstyle.org',
-        rules: rules.length > 0 ? rules : undefined,
+        ...(rules.length > 0 ? { rules } : {}),
       },
     },
     results,

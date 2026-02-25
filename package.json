@@ -11,6 +11,10 @@
   ],
   "license": "MIT",
   "author": "TonyRL",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TonyRL/checkstyle-to-sarif.git"
+  },
   "bin": {
     "checkstyle-to-sarif": "./dist/cli.js"
   },
@@ -32,8 +36,8 @@
     "dev": "tsdown --watch",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "oxlint --type-aware --fix",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -48,12 +52,13 @@
     "@vitest/coverage-v8": "^4.0.18",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
+    "oxlint-tsgolint": "^0.15.0",
     "tsdown": "^0.20.3",
     "typescript": "^5.7.3",
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.30.2",
   "pnpm": {

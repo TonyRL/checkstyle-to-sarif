@@ -260,6 +260,13 @@ describe('SARIF v2.1.0 compliance', () => {
       const noteResult = sarif.runs[0].results.find((r) => r.level === 'note');
       expect(noteResult).toBeDefined();
     });
+
+    it('maps Checkstyle ignore → SARIF none', () => {
+      const xml = loadFixture('multiple-severities.xml');
+      const sarif = parseSarif(xml);
+      const noneResult = sarif.runs[0].results.find((r) => r.level === 'none');
+      expect(noneResult).toBeDefined();
+    });
   });
 
   describe('Full pipeline compliance', () => {

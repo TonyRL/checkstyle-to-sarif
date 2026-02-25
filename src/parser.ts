@@ -28,10 +28,17 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   // Only force arrays for <file> and <error> elements, never for attributes
-  isArray: (name, _jpath, _isLeafNode, isAttribute) => !isAttribute && ARRAY_ELEMENTS.has(name),
+  isArray: (name, _jpath, _isLeafNode, isAttribute) => (isAttribute ? false : ARRAY_ELEMENTS.has(name)),
   // Keep all attribute values as strings
   parseAttributeValue: false,
 });
+
+/**
+ * Type guard to check if parsed XML is a valid RawCheckstyleRoot structure
+ */
+function isRawCheckstyleRoot(value: unknown): value is RawCheckstyleRoot {
+  return Boolean(value && typeof value === 'object' && 'checkstyle' in value);
+}
 
 /**
  * Parses a Checkstyle XML string into a structured CheckstyleReport.
@@ -41,61 +48,67 @@ const parser = new XMLParser({
  * @throws {Error} If the XML is malformed or does not match the expected Checkstyle format
  */
 export function parseCheckstyleXml(xmlContent: string): CheckstyleReport {
-  if (!xmlContent || xmlContent.trim() === '') {
+  const trimmedContent = xmlContent.trim();
+  if (trimmedContent === '') {
     throw new Error('Input XML content is empty');
   }
 
-  let parsed: RawCheckstyleRoot;
+  let parsed: unknown;
   try {
-    parsed = parser.parse(xmlContent) as RawCheckstyleRoot;
+    parsed = parser.parse(xmlContent);
   } catch (err) {
     throw new Error(`Failed to parse XML: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
   }
 
-  if (!parsed.checkstyle) {
+  // Type guard: validate the parsed structure
+  if (!isRawCheckstyleRoot(parsed)) {
     throw new Error('Invalid Checkstyle XML: missing root <checkstyle> element');
   }
 
   const root = parsed.checkstyle;
-  const rawFiles = root.file ?? [];
-  const filesArray = Array.isArray(rawFiles) ? rawFiles : [rawFiles];
+  if (root) {
+    const rawFiles = root.file === undefined ? [] : root.file;
+    const filesArray = Array.isArray(rawFiles) ? rawFiles : [rawFiles];
 
-  const files: CheckstyleFile[] = filesArray.map((rawFile) => {
-    const fileName = rawFile['@_name'] ?? '';
-    const rawErrors = rawFile.error ?? [];
-    const errorsArray = Array.isArray(rawErrors) ? rawErrors : [rawErrors];
+    const files: CheckstyleFile[] = filesArray.map((rawFile) => {
+      const fileName = rawFile['@_name'] ?? '';
+      const rawErrors = rawFile.error ?? [];
+      const errorsArray = Array.isArray(rawErrors) ? rawErrors : [rawErrors];
 
-    const errors: CheckstyleError[] = errorsArray
-      .filter((e): e is RawCheckstyleError => e !== null && e !== undefined && typeof e === 'object')
-      .map((rawError) => {
-        const line = Number(rawError['@_line'] ?? 1);
-        const columnRaw = rawError['@_column'];
-        const column = columnRaw !== undefined ? Number(columnRaw) : undefined;
-        const severity = normalizeCheckstyleSeverity(String(rawError['@_severity'] ?? 'warning'));
-        const message = String(rawError['@_message'] ?? '');
-        const source = String(rawError['@_source'] ?? '');
+      const errors: CheckstyleError[] = errorsArray
+        .filter((e): e is RawCheckstyleError => e !== null && e !== undefined && typeof e === 'object')
+        .map((rawError) => {
+          const line = Number(rawError['@_line'] ?? 1);
+          const columnRaw = rawError['@_column'];
+          const column = columnRaw === undefined ? undefined : Number(columnRaw);
+          const severity = normalizeCheckstyleSeverity(String(rawError['@_severity'] ?? 'warning'));
+          const message = String(rawError['@_message'] ?? '');
+          const source = String(rawError['@_source'] ?? '');
 
-        const error: CheckstyleError = {
-          line: isNaN(line) ? 1 : line,
-          severity,
-          message,
-          source,
-        };
+          const error: CheckstyleError = {
+            line: isNaN(line) ? 1 : line,
+            severity,
+            message,
+            source,
+          };
 
-        if (column !== undefined && !isNaN(column)) {
-          error.column = column;
-        }
+          if (column !== undefined && Number.isFinite(column)) {
+            error.column = column;
+          }
 
-        return error;
-      });
+          return error;
+        });
 
-    return { name: fileName, error: errors };
-  });
+      return { name: fileName, error: errors };
+    });
 
-  return {
-    version: root['@_version'] !== undefined ? String(root['@_version']) : undefined,
-    file: files,
-  };
+    return {
+      version: root['@_version'] === undefined ? undefined : String(root['@_version']),
+      file: files,
+    };
+  }
+
+  throw new Error('Invalid Checkstyle XML: missing root <checkstyle> element');
 }
 
 function normalizeCheckstyleSeverity(severity: string): CheckstyleError['severity'] {

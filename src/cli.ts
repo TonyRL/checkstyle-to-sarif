@@ -1,10 +1,15 @@
-#!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import process from 'node:process';
 
 import { program } from 'commander';
 
 import { convertCheckstyleToSarif } from './index.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const { version: pkgVersion } = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
 async function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -19,9 +24,9 @@ async function main(): Promise<void> {
   program
     .name('checkstyle-to-sarif')
     .description('Convert Checkstyle XML output to SARIF format')
-    .version('0.1.0')
-    .option('-i, --input <path>', 'Path to the Checkstyle XML input file')
-    .option('-o, --output <path>', 'Path to write the SARIF output file (defaults to stdout)');
+    .version(pkgVersion)
+    .option('-i, --input <path>', 'path to the Checkstyle XML input file')
+    .option('-o, --output <path>', 'path to write the SARIF output file (defaults to stdout)');
 
   program.parse();
 
@@ -38,7 +43,14 @@ async function main(): Promise<void> {
       process.stderr.write(`Error: Cannot read input file "${opts.input}": ${message}\n`);
       process.exit(1);
     }
-  } else if (!process.stdin.isTTY) {
+  } else if (process.stdin.isTTY) {
+    process.stderr.write(
+      'Error: No input provided. Use --input <path> or pipe input via stdin.\n' +
+        'Example: npx checkstyle-to-sarif --input checkstyle.xml\n' +
+        '         cat checkstyle.xml | npx checkstyle-to-sarif\n'
+    );
+    process.exit(1);
+  } else {
     // Reading from piped stdin
     try {
       xmlContent = await readStdin();
@@ -47,13 +59,6 @@ async function main(): Promise<void> {
       process.stderr.write(`Error: Failed to read from stdin: ${message}\n`);
       process.exit(1);
     }
-  } else {
-    process.stderr.write(
-      'Error: No input provided. Use --input <path> or pipe input via stdin.\n' +
-        'Example: npx checkstyle-to-sarif --input checkstyle.xml\n' +
-        '         cat checkstyle.xml | npx checkstyle-to-sarif\n'
-    );
-    process.exit(1);
   }
 
   // Convert

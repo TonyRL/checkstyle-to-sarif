@@ -9,4 +9,7 @@
     <file name="src/C.java">
         <error line="3" severity="info" message="Info message." source="com.example.checks.InfoCheck"/>
     </file>
+    <file name="src/D.java">
+        <error line="4" severity="ignore" message="Ignored message." source="com.example.checks.IgnoredCheck"/>
+    </file>
 </checkstyle>

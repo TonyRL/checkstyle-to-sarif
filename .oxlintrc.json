@@ -5,10 +5,10 @@
     "correctness": "error",
     "suspicious": "warn",
     "perf": "warn"
-    // "style": "warn",
   },
   "rules": {
-    "curly": "error"
+    "curly": "error",
+    "no-negated-condition": "error"
   },
   "settings": {
     "jsdoc": {

@@ -133,5 +133,28 @@ describe('parseCheckstyleXml', () => {
     it('throws on missing <checkstyle> root element', () => {
       expect(() => parseCheckstyleXml('<root><something/></root>')).toThrow('Invalid Checkstyle XML');
     });
+
+    it('throws on malformed XML parsing error', () => {
+      expect(() => parseCheckstyleXml('<')).toThrow('Failed to parse XML');
+    });
+
+    it('throws when parsed root lacks checkstyle object after guard', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle/>`;
+      expect(() => parseCheckstyleXml(xml)).toThrow('Invalid Checkstyle XML');
+    });
+  });
+
+  describe('severity normalization', () => {
+    it('maps unknown severity to warning', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="10.0">
+  <file name="Foo.java">
+    <error line="1" severity="CUSTOM" message="Test" source="com.example.TestCheck"/>
+  </file>
+</checkstyle>`;
+      const report = parseCheckstyleXml(xml);
+      expect(report.file[0].error[0].severity).toBe('warning');
+    });
   });
 });
