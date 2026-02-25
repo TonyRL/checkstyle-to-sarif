@@ -1,15 +1,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import process from 'node:process';
 
 import { program } from 'commander';
 
 import { convertCheckstyleToSarif } from './index.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const { version: pkgVersion } = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+const cliVersion = '0.1.1';
 
 async function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -24,7 +20,7 @@ async function main(): Promise<void> {
   program
     .name('checkstyle-to-sarif')
     .description('Convert Checkstyle XML output to SARIF format')
-    .version(pkgVersion)
+    .version(cliVersion)
     .option('-i, --input <path>', 'path to the Checkstyle XML input file')
     .option('-o, --output <path>', 'path to write the SARIF output file (defaults to stdout)');
 
