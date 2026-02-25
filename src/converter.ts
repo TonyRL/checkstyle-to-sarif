@@ -1,12 +1,12 @@
-import type { CheckstyleError, CheckstyleReport } from './types/checkstyle.js';
-import type { Location, ReportingDescriptor, Result, ResultLevel, Run, SarifLog } from './types/sarif.js';
+import { SarifBuilder, SarifResultBuilder, SarifRuleBuilder, SarifRunBuilder } from 'node-sarif-builder';
 
-const SARIF_SCHEMA = 'https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json';
+import type { CheckstyleError, CheckstyleReport } from './types/checkstyle.js';
+import type { Log, Result } from './types/sarif.js';
 
 /**
  * Maps a Checkstyle severity string to a SARIF result level.
  */
-function mapSeverityToLevel(severity: CheckstyleError['severity']): ResultLevel {
+function mapSeverityToLevel(severity: CheckstyleError['severity']): Result.level {
   switch (severity) {
     case 'error':
       return 'error';
@@ -58,11 +58,28 @@ function extractRuleId(source: string): string {
  * @param toolVersion - Optional version string for the tool driver
  * @returns A structured SARIF log object
  */
-export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: string): SarifLog {
+export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: string): Log {
+  // Create SARIF builder
+  const sarifBuilder = new SarifBuilder();
+
+  // Create SARIF run builder
+  const version = toolVersion ?? checkstyle.version;
+  const sarifRunBuilder = new SarifRunBuilder().initSimple({
+    toolDriverName: 'Checkstyle',
+    toolDriverVersion: version ?? '',
+    url: 'https://checkstyle.org',
+  });
+
+  // Set columnKind
+  sarifRunBuilder.run.columnKind = 'utf16CodeUnits';
+
+  // Remove version if empty string (when neither toolVersion nor checkstyle.version is set)
+  if (version === undefined) {
+    delete sarifRunBuilder.run.tool.driver.version;
+  }
+
   // Collect unique rules from all errors
-  const ruleMap = new Map<string, ReportingDescriptor>();
-  const ruleIndexMap = new Map<string, number>();
-  const results: Result[] = [];
+  const ruleIds = new Set<string>();
 
   for (const file of checkstyle.file) {
     const fileUri = pathToUri(file.name);
@@ -72,71 +89,63 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
       const level = mapSeverityToLevel(error.severity);
 
       // Register rule if not already seen
-      let ruleIndex = ruleIndexMap.get(ruleId);
-      if (ruleIndex === undefined) {
-        const rule: ReportingDescriptor = {
-          id: ruleId,
-          ...(error.source && {
-            helpUri: `https://checkstyle.org/checks/${ruleId.toLowerCase()}.html`,
-          }),
-        };
-        ruleIndex = ruleMap.size;
-        ruleIndexMap.set(ruleId, ruleIndex);
-        ruleMap.set(ruleId, rule);
+      if (!ruleIds.has(ruleId)) {
+        const sarifRuleBuilder = new SarifRuleBuilder().initSimple({
+          ruleId,
+          shortDescriptionText: ruleId,
+          helpUri: `https://checkstyle.org/checks/${ruleId.toLowerCase()}.html`,
+        });
+        sarifRunBuilder.addRule(sarifRuleBuilder);
+        ruleIds.add(ruleId);
       }
 
-      const region: NonNullable<Location['physicalLocation']>['region'] = {
+      // Create SARIF result
+      const sarifResultBuilder = new SarifResultBuilder();
+      const hasColumn = typeof error.column === 'number' && error.column > 0;
+      const sarifResultInit: {
+        level: Result.level;
+        messageText: string;
+        ruleId: string;
+        fileUri: string;
+        startLine?: number;
+        startColumn?: number;
+      } = {
+        level,
+        messageText: error.message,
+        ruleId,
+        fileUri,
         startLine: error.line,
       };
-      if (typeof error.column === 'number' && error.column > 0) {
-        region.startColumn = error.column;
+
+      // Only include column if present and greater than 0
+      if (hasColumn) {
+        sarifResultInit.startColumn = error.column;
       }
 
-      const location: Location = {
-        physicalLocation: {
-          artifactLocation: {
-            uri: fileUri,
-          },
-          region,
-        },
-      };
+      sarifResultBuilder.initSimple(sarifResultInit);
 
-      const result: Result = {
-        ruleId,
-        ruleIndex,
-        level,
-        message: { text: error.message },
-        locations: [location],
-      };
+      // node-sarif-builder sets default column values to 1, we need to remove them
+      // if the original data didn't have column information
+      if (!hasColumn) {
+        const region = sarifResultBuilder.result.locations?.[0]?.physicalLocation?.region;
+        if (region) {
+          delete region.startColumn;
+          delete region.endColumn;
+        }
+      }
 
-      results.push(result);
+      sarifRunBuilder.addResult(sarifResultBuilder);
     }
   }
 
-  const rules = [...ruleMap.values()];
+  // Add run to SARIF log
+  sarifBuilder.addRun(sarifRunBuilder);
 
-  const run: Run = {
-    tool: {
-      driver: {
-        name: 'Checkstyle',
-        ...(toolVersion === undefined
-          ? checkstyle.version === undefined
-            ? {}
-            : { version: checkstyle.version }
-          : { version: toolVersion }),
-        informationUri: 'https://checkstyle.org',
-        ...(rules.length > 0 ? { rules } : {}),
-      },
-    },
-    results,
-    columnKind: 'utf16CodeUnits',
-  };
+  // Build SARIF log
+  const log = sarifBuilder.buildSarifOutput();
 
-  const sarifLog: SarifLog = {
-    version: '2.1.0',
-    $schema: SARIF_SCHEMA,
-    runs: [run],
-  };
+  // Update $schema to match expected SARIF v2.1.0 schema
+  log.$schema = 'https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json';
 
-  return sarifLog;
+  return log;
 }
