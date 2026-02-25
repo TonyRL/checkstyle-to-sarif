@@ -3,15 +3,16 @@ name: Publish Package
 on:
   push:
     tags:
-      - 'v*'
-
-permissions:
-  id-token: write # Required for OIDC
+      - 'v*.*.*'
 
 jobs:
-  bpublish:
+  publish:
     name: npm publish
     runs-on: ubuntu-slim
+    permissions:
+      id-token: write # Required for OIDC
+      contents: write # softprops/action-gh-release
+      attestations: write # actions/attest-build-provenance
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -25,4 +26,18 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
-      - run: pnpm publish
+      - run: pnpm publish --no-git-checks
+      - name: Rename CLI artifact
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          repo="${GITHUB_REPOSITORY##*/}"
+          artifact="dist/${repo}-v${version}.js"
+          mv dist/cli.js "$artifact"
+          echo "CLI_ARTIFACT=$artifact" >> "$GITHUB_ENV"
+      - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-path: ${{ env.CLI_ARTIFACT }}
+      - name: Release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          files: ${{ env.CLI_ARTIFACT }}
