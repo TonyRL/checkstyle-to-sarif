@@ -2,8 +2,13 @@ name: Publish Package
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -13,7 +18,6 @@ jobs:
       id-token: write # Required for OIDC
       contents: write # softprops/action-gh-release
       attestations: write # actions/attest-build-provenance
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -26,12 +30,19 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
+      - name: Extract Version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version=$(node -p "require('./package.json').version")
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
       - run: pnpm publish --no-git-checks
       - name: Rename CLI artifact
         run: |
-          version="${GITHUB_REF_NAME#v}"
           repo="${GITHUB_REPOSITORY##*/}"
-          artifact="dist/${repo}-v${version}.js"
+          artifact="dist/${repo}-v${{ env.VERSION }}.js"
           mv dist/cli.js "$artifact"
           echo "CLI_ARTIFACT=$artifact" >> "$GITHUB_ENV"
       - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
@@ -41,3 +52,4 @@ jobs:
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           files: ${{ env.CLI_ARTIFACT }}
+          tag_name: v${{ env.VERSION }}
