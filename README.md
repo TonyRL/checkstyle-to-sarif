@@ -1,6 +1,6 @@
 # checkstyle-to-sarif
 
-Convert Checkstyle XML output to Static Analysis Results Interchange Format (SARIF) for the usage of [GitHub Code Scanning](https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support-for-code-scanning).
+Convert Checkstyle XML output to Static Analysis Results Interchange Format (SARIF) for [GitHub Code Scanning](https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support-for-code-scanning).
 
 ## Usage
 
