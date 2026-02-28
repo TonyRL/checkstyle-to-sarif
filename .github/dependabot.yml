@@ -6,6 +6,7 @@ updates:
       interval: daily
     labels:
       - dependencies
+    target-branch: dev
 
   - package-ecosystem: 'github-actions'
     directory: '/'
@@ -13,3 +14,4 @@ updates:
       interval: daily
     labels:
       - dependencies
+    target-branch: dev
