@@ -27,6 +27,7 @@ jobs:
       - run: pnpm run test
 
   automerge:
+    if: github.triggering_actor == 'dependabot[bot]' && github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-slim
     permissions:
