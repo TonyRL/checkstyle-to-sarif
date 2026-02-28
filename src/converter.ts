@@ -6,7 +6,7 @@ import type { Log, Result } from './types/sarif.js';
 /**
  * Maps a Checkstyle severity string to a SARIF result level.
  */
-function mapSeverityToLevel(severity: CheckstyleError['severity']): Result.level {
+function mapSeverityToLevel(severity: CheckstyleError['severity']): Result['level'] {
   switch (severity) {
     case 'error':
       return 'error';
@@ -103,7 +103,7 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
       const sarifResultBuilder = new SarifResultBuilder();
       const hasColumn = typeof error.column === 'number' && error.column > 0;
       const sarifResultInit: {
-        level: Result.level;
+        level: Result['level'];
         messageText: string;
         ruleId: string;
         fileUri: string;
