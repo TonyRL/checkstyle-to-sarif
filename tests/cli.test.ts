@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, it, expect, vi } from 'vitest';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, 'fixtures');
@@ -31,7 +31,7 @@ async function runBuiltCli(
     const proc = execFileCb(
       'node',
       [cliPath, ...args],
-      { encoding: 'utf-8', timeout: 10000 },
+      { encoding: 'utf-8', timeout: 10000, maxBuffer: 10 * 1024 * 1024 },
       (err, stdout, stderr) => {
         const exitCode = err && typeof err === 'object' && 'code' in err && typeof err.code === 'number'
           ? err.code
@@ -51,6 +51,17 @@ async function runBuiltCli(
 }
 
 describe('CLI integration (built)', () => {
+  beforeAll(async () => {
+    const cliPath = join(projectRoot, 'dist', 'cli.js');
+    if (!existsSync(cliPath)) {
+      await execFile('pnpm', ['build'], {
+        cwd: projectRoot,
+        encoding: 'utf-8',
+        timeout: 120000,
+      });
+    }
+  });
+
   it('--input: converts checkstyle.xml file to SARIF on stdout', async () => {
     const inputFile = join(fixturesDir, 'single-error.xml');
     const { stdout, stderr, code } = await runBuiltCli(['--input', inputFile]);

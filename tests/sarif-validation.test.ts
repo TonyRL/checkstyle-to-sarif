@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 
 import { convertCheckstyleToSarif } from '../src/index.js';
-import type { SarifLog } from '../src/types/sarif.js';
+import type { Log } from '../src/types/sarif.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, 'fixtures');
@@ -14,7 +14,7 @@ function loadFixture(name: string): string {
   return readFileSync(join(fixturesDir, name), 'utf-8');
 }
 
-function parseSarif(xml: string): SarifLog {
+function parseSarif(xml: string): Log {
   return JSON.parse(convertCheckstyleToSarif(xml));
 }
 

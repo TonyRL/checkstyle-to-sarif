@@ -1,31 +1,31 @@
 # checkstyle-to-sarif
 
-Convert Checkstyle XML output to Static Analysis Results Interchange Format (SARIF) v2.1.0.
+Convert Checkstyle XML output to Static Analysis Results Interchange Format (SARIF) for the usage of [GitHub Code Scanning](https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support-for-code-scanning).
 
 ## Usage
 
 ### File Input
 
 ```bash
-npx checkstyle-to-sarif --input checkstyle.xml --output results.sarif
+npx checkstyle-to-sarif --input /path/to/checkstyle.xml --output /path/to/results.sarif
 ```
 
-### stdin Input
+### stdin
 
 ```bash
-cat checkstyle.xml | npx checkstyle-to-sarif --output results.sarif
+cat /path/to/checkstyle.xml | npx checkstyle-to-sarif --output /path/to/results.sarif
 ```
 
-### stdout Output
+### stdout
 
 ```bash
-npx checkstyle-to-sarif --input checkstyle.xml > results.sarif
+npx checkstyle-to-sarif --input /path/to/checkstyle.xml > /path/to/results.sarif
 ```
 
 ### Aliases
 
 ```bash
-npx checkstyle-to-sarif -i checkstyle.xml -o results.sarif
+npx checkstyle-to-sarif -i /path/to/checkstyle.xml -o /path/to/results.sarif
 ```
 
 ## CLI Options

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 
 import { convertCheckstyleToSarif, parseCheckstyleXml, convertToSarif } from '../src/index.js';
-import type { SarifLog } from '../src/types/sarif.js';
+import type { Log } from '../src/types/sarif.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, 'fixtures');
@@ -26,7 +26,7 @@ describe('convertCheckstyleToSarif', () => {
   it('output is valid SARIF v2.1.0 JSON', () => {
     const xml = loadFixture('valid-checkstyle.xml');
     const result = convertCheckstyleToSarif(xml);
-    const sarif: SarifLog = JSON.parse(result);
+    const sarif: Log = JSON.parse(result);
 
     expect(sarif.version).toBe('2.1.0');
     expect(Array.isArray(sarif.runs)).toBe(true);
@@ -36,7 +36,7 @@ describe('convertCheckstyleToSarif', () => {
   it('converts empty checkstyle to SARIF with empty results', () => {
     const xml = loadFixture('empty-checkstyle.xml');
     const result = convertCheckstyleToSarif(xml);
-    const sarif: SarifLog = JSON.parse(result);
+    const sarif: Log = JSON.parse(result);
 
     expect(sarif.runs[0].results).toHaveLength(0);
   });
@@ -44,7 +44,7 @@ describe('convertCheckstyleToSarif', () => {
   it('preserves all violations from valid checkstyle', () => {
     const xml = loadFixture('valid-checkstyle.xml');
     const result = convertCheckstyleToSarif(xml);
-    const sarif: SarifLog = JSON.parse(result);
+    const sarif: Log = JSON.parse(result);
 
     // valid-checkstyle.xml has 3 + 2 + 1 = 6 errors total
     expect(sarif.runs[0].results).toHaveLength(6);

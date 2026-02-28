@@ -10,6 +10,7 @@ export default defineConfig([
     clean: true,
     outDir: 'dist',
     outExtensions,
+    inlineOnly: false,
   },
   {
     entry: ['src/cli.ts'],
