@@ -5,7 +5,7 @@ import { program } from 'commander';
 
 import { convertCheckstyleToSarif } from './index.js';
 
-const cliVersion = '0.1.1';
+const cliVersion = '0.2.0';
 
 async function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
