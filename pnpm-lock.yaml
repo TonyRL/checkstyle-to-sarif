@@ -13,7 +13,7 @@ importers:
         version: 14.0.3
       fast-xml-parser:
         specifier: ^5.3.7
-        version: 5.5.10
+        version: 5.5.11
       node-sarif-builder:
         specifier: ^4.0.0
         version: 4.0.0
@@ -920,8 +920,8 @@ packages:
   fast-xml-builder@1.1.4:
     resolution: {integrity: sha512-f2jhpN4Eccy0/Uz9csxh3Nu6q4ErKxf0XIsasomfOihuSUa3/xw6w8dnOtCDgEItQFJG8KyXPzQXzcODDrrbOg==}
 
-  fast-xml-parser@5.5.10:
-    resolution: {integrity: sha512-go2J2xODMc32hT+4Xr/bBGXMaIoiCwrwp2mMtAvKyvEFW6S/v5Gn2pBmE4nvbwNjGhpcAiOwEv7R6/GZ6XRa9w==}
+  fast-xml-parser@5.5.11:
+    resolution: {integrity: sha512-QL0eb0YbSTVWF6tTf1+LEMSgtCEjBYPpnAjoLC8SscESlAjXEIRJ7cHtLG0pLeDFaZLa4VKZLArtA/60ZS7vyA==}
     hasBin: true
 
   fdir@6.5.0:
@@ -1104,8 +1104,8 @@ packages:
       oxlint-tsgolint:
         optional: true
 
-  path-expression-matcher@1.2.1:
-    resolution: {integrity: sha512-d7gQQmLvAKXKXE2GeP9apIGbMYKz88zWdsn/BN2HRWVQsDFdUY36WSLTY0Jvd4HWi7Fb30gQ62oAOzdgJA6fZw==}
+  path-expression-matcher@1.4.0:
+    resolution: {integrity: sha512-s4DQMxIdhj3jLFWd9LxHOplj4p9yQ4ffMGowFf3cpEgrrJjEhN0V5nxw4Ye1EViAGDoL4/1AeO6qHpqYPOzE4Q==}
     engines: {node: '>=14.0.0'}
 
   pathe@2.0.3:
@@ -1175,8 +1175,8 @@ packages:
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
 
-  strnum@2.2.2:
-    resolution: {integrity: sha512-DnR90I+jtXNSTXWdwrEy9FakW7UX+qUZg28gj5fk2vxxl7uS/3bpI4fjFYVmdK9etptYBPNkpahuQnEwhwECqA==}
+  strnum@2.2.3:
+    resolution: {integrity: sha512-oKx6RUCuHfT3oyVjtnrmn19H1SiCqgJSg+54XqURKp5aCMbrXrhLjRN9TjuwMjiYstZ0MzDrHqkGZ5dFTKd+zg==}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -1912,13 +1912,13 @@ snapshots:
 
   fast-xml-builder@1.1.4:
     dependencies:
-      path-expression-matcher: 1.2.1
+      path-expression-matcher: 1.4.0
 
-  fast-xml-parser@5.5.10:
+  fast-xml-parser@5.5.11:
     dependencies:
       fast-xml-builder: 1.1.4
-      path-expression-matcher: 1.2.1
-      strnum: 2.2.2
+      path-expression-matcher: 1.4.0
+      strnum: 2.2.3
 
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
@@ -2102,7 +2102,7 @@ snapshots:
       '@oxlint/binding-win32-x64-msvc': 1.59.0
       oxlint-tsgolint: 0.20.0
 
-  path-expression-matcher@1.2.1: {}
+  path-expression-matcher@1.4.0: {}
 
   pathe@2.0.3: {}
 
@@ -2203,7 +2203,7 @@ snapshots:
 
   std-env@3.10.0: {}
 
-  strnum@2.2.2: {}
+  strnum@2.2.3: {}
 
   supports-color@7.2.0:
     dependencies:
