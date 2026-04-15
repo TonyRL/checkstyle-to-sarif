@@ -13,7 +13,7 @@ importers:
         version: 14.0.3
       fast-xml-parser:
         specifier: ^5.3.7
-        version: 5.5.11
+        version: 5.6.0
       node-sarif-builder:
         specifier: ^4.0.0
         version: 4.0.0
@@ -273,6 +273,9 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
+
+  '@nodable/entities@1.1.0':
+    resolution: {integrity: sha512-bidpxmTBP0pOsxULw6XlxzQpTgrAGLDHGBK/JuWhPDL6ZV0GZ/PmN9CA9do6e+A9lYI6qx6ikJUtJYRxup141g==}
 
   '@oxc-project/types@0.122.0':
     resolution: {integrity: sha512-oLAl5kBpV4w69UtFZ9xqcmTi+GENWOcPF7FCrczTiBbmC0ibXxCwyvZGbO39rCVEuLGAZM84DH0pUIyyv/YJzA==}
@@ -920,8 +923,8 @@ packages:
   fast-xml-builder@1.1.4:
     resolution: {integrity: sha512-f2jhpN4Eccy0/Uz9csxh3Nu6q4ErKxf0XIsasomfOihuSUa3/xw6w8dnOtCDgEItQFJG8KyXPzQXzcODDrrbOg==}
 
-  fast-xml-parser@5.5.11:
-    resolution: {integrity: sha512-QL0eb0YbSTVWF6tTf1+LEMSgtCEjBYPpnAjoLC8SscESlAjXEIRJ7cHtLG0pLeDFaZLa4VKZLArtA/60ZS7vyA==}
+  fast-xml-parser@5.6.0:
+    resolution: {integrity: sha512-5G+uaEBbOm9M4dgMOV3K/rBzfUNGqGqoUTaYJM3hBwM8t71w07gxLQZoTsjkY8FtfjabqgQHEkeIySBDYeBmJw==}
     hasBin: true
 
   fdir@6.5.0:
@@ -1104,8 +1107,8 @@ packages:
       oxlint-tsgolint:
         optional: true
 
-  path-expression-matcher@1.4.0:
-    resolution: {integrity: sha512-s4DQMxIdhj3jLFWd9LxHOplj4p9yQ4ffMGowFf3cpEgrrJjEhN0V5nxw4Ye1EViAGDoL4/1AeO6qHpqYPOzE4Q==}
+  path-expression-matcher@1.5.0:
+    resolution: {integrity: sha512-cbrerZV+6rvdQrrD+iGMcZFEiiSrbv9Tfdkvnusy6y0x0GKBXREFg/Y65GhIfm0tnLntThhzCnfKwp1WRjeCyQ==}
     engines: {node: '>=14.0.0'}
 
   pathe@2.0.3:
@@ -1497,6 +1500,8 @@ snapshots:
       '@emnapi/runtime': 1.9.1
       '@tybys/wasm-util': 0.10.1
     optional: true
+
+  '@nodable/entities@1.1.0': {}
 
   '@oxc-project/types@0.122.0': {}
 
@@ -1912,12 +1917,13 @@ snapshots:
 
   fast-xml-builder@1.1.4:
     dependencies:
-      path-expression-matcher: 1.4.0
+      path-expression-matcher: 1.5.0
 
-  fast-xml-parser@5.5.11:
+  fast-xml-parser@5.6.0:
     dependencies:
+      '@nodable/entities': 1.1.0
       fast-xml-builder: 1.1.4
-      path-expression-matcher: 1.4.0
+      path-expression-matcher: 1.5.0
       strnum: 2.2.3
 
   fdir@6.5.0(picomatch@4.0.4):
@@ -2102,7 +2108,7 @@ snapshots:
       '@oxlint/binding-win32-x64-msvc': 1.59.0
       oxlint-tsgolint: 0.20.0
 
-  path-expression-matcher@1.4.0: {}
+  path-expression-matcher@1.5.0: {}
 
   pathe@2.0.3: {}
 
