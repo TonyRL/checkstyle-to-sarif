@@ -46,7 +46,7 @@
   "dependencies": {
     "commander": "^15.0.0",
     "fast-xml-parser": "^5.3.7",
-    "node-sarif-builder": "^4.0.0"
+    "node-sarif-builder": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
