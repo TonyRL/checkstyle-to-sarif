@@ -101,28 +101,16 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
 
       // Create SARIF result
       const sarifResultBuilder = new SarifResultBuilder();
-      const hasColumn = typeof error.column === 'number' && error.column > 0;
-      const sarifResultInit: {
-        level: NonNullable<Result['level']>;
-        messageText: string;
-        ruleId: string;
-        fileUri: string;
-        startLine?: number;
-        startColumn?: number;
-      } = {
+      const hasColumn = error.column !== undefined && error.column > 0;
+      sarifResultBuilder.initSimple({
         level,
         messageText: error.message,
         ruleId,
         fileUri,
         startLine: error.line,
-      };
-
-      // Only include column if present and greater than 0
-      if (hasColumn) {
-        sarifResultInit.startColumn = error.column;
-      }
-
-      sarifResultBuilder.initSimple(sarifResultInit);
+        // Only include column if present and greater than 0
+        startColumn: hasColumn ? error.column : undefined,
+      });
 
       // node-sarif-builder sets default column values to 1, we need to remove them
       // if the original data didn't have column information

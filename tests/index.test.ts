@@ -19,7 +19,7 @@ describe('convertCheckstyleToSarif', () => {
     const xml = loadFixture('valid-checkstyle.xml');
     const result = convertCheckstyleToSarif(xml);
 
-    expect(typeof result).toBe('string');
+    expect(result).toBeTypeOf('string');
     expect(() => JSON.parse(result)).not.toThrow();
   });
 
@@ -68,8 +68,8 @@ describe('convertCheckstyleToSarif', () => {
   });
 
   it('exports are all accessible', () => {
-    expect(typeof convertCheckstyleToSarif).toBe('function');
-    expect(typeof parseCheckstyleXml).toBe('function');
-    expect(typeof convertToSarif).toBe('function');
+    expect(convertCheckstyleToSarif).toBeTypeOf('function');
+    expect(parseCheckstyleXml).toBeTypeOf('function');
+    expect(convertToSarif).toBeTypeOf('function');
   });
 });
