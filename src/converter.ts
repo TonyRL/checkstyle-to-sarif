@@ -6,7 +6,7 @@ import type { Log, Result } from './types/sarif.js';
 /**
  * Maps a Checkstyle severity string to a SARIF result level.
  */
-function mapSeverityToLevel(severity: CheckstyleError['severity']): Result['level'] {
+function mapSeverityToLevel(severity: CheckstyleError['severity']): NonNullable<Result['level']> {
   switch (severity) {
     case 'error':
       return 'error';
@@ -35,7 +35,7 @@ function pathToUri(filePath: string): string {
     // Unix absolute path
     return `file://${normalized}`;
   }
-  // Relative path — leave as-is so SARIF consumers can resolve via uriBaseId
+  // Relative path, leave as-is so SARIF consumers can resolve via uriBaseId
   return normalized;
 }
 
@@ -101,28 +101,16 @@ export function convertToSarif(checkstyle: CheckstyleReport, toolVersion?: strin
 
       // Create SARIF result
       const sarifResultBuilder = new SarifResultBuilder();
-      const hasColumn = typeof error.column === 'number' && error.column > 0;
-      const sarifResultInit: {
-        level: Result['level'];
-        messageText: string;
-        ruleId: string;
-        fileUri: string;
-        startLine?: number;
-        startColumn?: number;
-      } = {
+      const hasColumn = error.column !== undefined && error.column > 0;
+      sarifResultBuilder.initSimple({
         level,
         messageText: error.message,
         ruleId,
         fileUri,
         startLine: error.line,
-      };
-
-      // Only include column if present and greater than 0
-      if (hasColumn) {
-        sarifResultInit.startColumn = error.column;
-      }
-
-      sarifResultBuilder.initSimple(sarifResultInit);
+        // Only include column if present and greater than 0
+        startColumn: hasColumn ? error.column : undefined,
+      });
 
       // node-sarif-builder sets default column values to 1, we need to remove them
       // if the original data didn't have column information

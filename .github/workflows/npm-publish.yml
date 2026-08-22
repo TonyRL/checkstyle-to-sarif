@@ -17,11 +17,11 @@ jobs:
     permissions:
       id-token: write # Required for OIDC
       contents: write # softprops/action-gh-release
-      attestations: write # actions/attest-build-provenance
+      attestations: write # actions/attest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: lts/*
           cache: 'pnpm'
@@ -45,11 +45,11 @@ jobs:
           artifact="dist/${repo}-v${{ env.VERSION }}.js"
           mv dist/cli.js "$artifact"
           echo "CLI_ARTIFACT=$artifact" >> "$GITHUB_ENV"
-      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: ${{ env.CLI_ARTIFACT }}
       - name: Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           files: ${{ env.CLI_ARTIFACT }}
           tag_name: v${{ env.VERSION }}

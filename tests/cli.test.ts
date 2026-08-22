@@ -12,8 +12,7 @@ function loadFixture(name: string): string {
   return readFileSync(join(fixturesDir, name), 'utf-8');
 }
 
-
-// ─── CLI Integration Tests ────────────────────────────────────────────────────
+// --- CLI Integration Tests ----------------------------------------------------
 // These tests use child_process.execFile to test the built CLI
 import { execFile as execFileCb } from 'node:child_process';
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
@@ -24,7 +23,7 @@ const execFile = promisify(execFileCb);
 
 async function runBuiltCli(
   args: string[],
-  stdinContent?: string
+  stdinContent?: string,
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve) => {
     const cliPath = join(projectRoot, 'dist', 'cli.js');
@@ -33,15 +32,13 @@ async function runBuiltCli(
       [cliPath, ...args],
       { encoding: 'utf-8', timeout: 10000, maxBuffer: 10 * 1024 * 1024 },
       (err, stdout, stderr) => {
-        const exitCode = err && typeof err === 'object' && 'code' in err && typeof err.code === 'number'
-          ? err.code
-          : err ? 1 : 0;
+        const exitCode = err === null ? 0 : Number.isInteger(err.code) ? Number(err.code) : 1;
         resolve({
           stdout: stdout ?? '',
           stderr: stderr ?? '',
           code: exitCode,
         });
-      }
+      },
     );
     if (stdinContent !== undefined && proc.stdin) {
       proc.stdin.write(stdinContent);

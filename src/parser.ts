@@ -12,14 +12,16 @@ interface RawCheckstyleError {
 
 interface RawCheckstyleFile {
   '@_name'?: string;
-  error?: RawCheckstyleError | RawCheckstyleError[];
+  error?: (RawCheckstyleError | string)[];
 }
 
 interface RawCheckstyleRoot {
-  checkstyle?: {
-    '@_version'?: string;
-    file?: RawCheckstyleFile | RawCheckstyleFile[];
-  };
+  checkstyle?:
+    | {
+        '@_version'?: string;
+        file?: RawCheckstyleFile[];
+      }
+    | string;
 }
 
 const ARRAY_ELEMENTS = new Set(['file', 'error']);
@@ -34,13 +36,6 @@ const parser = new XMLParser({
 });
 
 /**
- * Type guard to check if parsed XML is a valid RawCheckstyleRoot structure
- */
-function isRawCheckstyleRoot(value: unknown): value is RawCheckstyleRoot {
-  return Boolean(value && typeof value === 'object' && 'checkstyle' in value);
-}
-
-/**
  * Parses a Checkstyle XML string into a structured CheckstyleReport.
  *
  * @param xmlContent - The raw XML content from a Checkstyle report
@@ -53,30 +48,23 @@ export function parseCheckstyleXml(xmlContent: string): CheckstyleReport {
     throw new Error('Input XML content is empty');
   }
 
-  let parsed: unknown;
+  let parsed: RawCheckstyleRoot;
   try {
     parsed = parser.parse(xmlContent);
   } catch (err) {
     throw new Error(`Failed to parse XML: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
   }
 
-  // Type guard: validate the parsed structure
-  if (!isRawCheckstyleRoot(parsed)) {
-    throw new Error('Invalid Checkstyle XML: missing root <checkstyle> element');
-  }
-
   const root = parsed.checkstyle;
-  if (root) {
-    const rawFiles = root.file === undefined ? [] : root.file;
-    const filesArray = Array.isArray(rawFiles) ? rawFiles : [rawFiles];
+  if (root instanceof Object) {
+    const filesArray = root.file ?? [];
 
     const files: CheckstyleFile[] = filesArray.map((rawFile) => {
       const fileName = rawFile['@_name'] ?? '';
-      const rawErrors = rawFile.error ?? [];
-      const errorsArray = Array.isArray(rawErrors) ? rawErrors : [rawErrors];
+      const errorsArray = rawFile.error ?? [];
 
       const errors: CheckstyleError[] = errorsArray
-        .filter((e): e is RawCheckstyleError => e !== null && e !== undefined && typeof e === 'object')
+        .filter((e): e is RawCheckstyleError => e instanceof Object)
         .map((rawError) => {
           const line = Number(rawError['@_line'] ?? 1);
           const columnRaw = rawError['@_column'];
